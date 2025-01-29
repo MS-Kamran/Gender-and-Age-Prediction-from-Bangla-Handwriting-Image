@@ -1,0 +1,148 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #a1b5b5; /* Soft pastel teal */
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    margin: 50px auto;
+    text-align: center;
+    background-color: #ffffff;
+    padding: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+h1 {
+    font-size: 2.5rem;
+    color: #223030; /* Dark teal */
+    margin-bottom: 20px;
+}
+
+.upload-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.upload-box {
+    width: 80%;
+    height: 200px;
+    border: 2px dashed #527f7f;
+    padding: 20px;
+    background-color: #f0f9f9; /* Light background for drop area */
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+}
+
+.upload-box p {
+    text-align: center;
+    color: #527f7f;
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.upload-box.dragover {
+    background-color: #d2e5e5; /* Light highlight when dragging over */
+}
+
+.upload-box input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.image-preview {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#uploaded-image {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 10px;
+    display: none;
+}
+
+.big-button {
+    padding: 20px 40px;
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #3c5d5d; /* Light muted teal */
+    color: white;
+    border: none;
+    border-radius: 10px;
+    width: 80%;
+    margin-top: 20px;
+    transition: background-color 0.3s ease;
+}
+
+.big-button:hover {
+    background-color: #527f7f; /* Slightly lighter teal */
+}
+
+.image-container {
+    display: flex;
+    justify-content: space-between; /* Ensure space between the result boxes */
+    margin-top: 30px;
+    gap: 20px; /* Adds some gap between the result containers */
+}
+
+.result-container {
+    display: none;
+    max-width: 400px;
+    text-align: left;
+    padding: 20px;
+    border: 2px solid #ddd;
+    margin: 10px;
+    background-color: #d2e5e5; /* Light background for results */
+    border-radius: 10px;
+    width: 48%; /* Ensure both result boxes fit side by side */
+}
+
+.result-container h3 {
+    font-size: 1.5rem;
+    color: #223030; /* Dark teal */
+}
+
+.result-container p {
+    font-size: 1.2rem;
+    color: #527f7f; /* Slightly lighter teal for details */
+}
+
+.error {
+    color: red;
+    font-size: 1.2rem;
+    margin-top: 20px;
+}
+
+#gender-result, #age-result {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #223030; /* Dark teal */
+    margin-bottom: 15px;
+}
+
+#gender-probabilities, #age-probabilities {
+    font-size: 1.5rem;
+    color: #527f7f; /* Accent teal */
+}
+
+#gender-result {
+    color: #3c5d5d; /* Light teal for gender result */
+}
+
+#age-result {
+    color: #223030; /* Dark teal for age result */
+}

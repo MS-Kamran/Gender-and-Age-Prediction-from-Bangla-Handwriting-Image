@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gender and Age Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        <h1>Gender and Age Prediction from Handwriting Image</h1>
+
+        <h1>Gender and Age Prediction from Image</h1>
+        <p>Drag and drop or choose an image to predict gender and age</p>
+
+        <!-- File Upload Form -->
+        <div class="upload-form">
+            <!-- Image upload box -->
+            <div class="upload-box" id="upload-box">
+                <input type="file" id="image" name="image" accept="image/*" required>
+                <div id="image-preview" class="image-preview">
+                    <p>Click or drag an image here</p>
+                </div>
+            </div>
+            <br><br>
+            <!-- Predict Button as a big box -->
+            <button type="submit" id="predict-button" class="big-button">Predict</button>
+        </div>
+
+        <div class="image-container">
+            <!-- Gender Prediction Result -->
+            <div id="gender-result-container" class="result-container">
+                <h3>Gender Prediction Result:</h3>
+                <p id="gender-result"></p>
+                <p id="gender-probabilities"></p>
+            </div>
+
+            <!-- Age Prediction Result -->
+            <div id="age-result-container" class="result-container">
+                <h3>Age Prediction Result:</h3>
+                <p id="age-result"></p>
+                <p id="age-probabilities"></p>
+            </div>
+        </div>
+
+        <div id="error" class="error" style="display:none;"></div>
+    </div>
+
+    <script>
+        const uploadBox = document.getElementById('upload-box');
+        const fileInput = document.getElementById('image');
+        const imagePreview = document.getElementById('image-preview');
+        const uploadedImage = document.createElement('img');
+        uploadedImage.id = 'uploaded-image';
+        uploadedImage.style.display = 'none';
+        imagePreview.appendChild(uploadedImage);
+
+        uploadBox.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadBox.classList.add('dragover');
+        });
+
+        uploadBox.addEventListener('dragleave', function() {
+            uploadBox.classList.remove('dragover');
+        });
+
+        uploadBox.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            fileInput.files = e.dataTransfer.files;
+            displayImage(file);
+        });
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            displayImage(file);
+        });
+
+        function displayImage(file) {
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedImage.src = event.target.result;
+                    uploadedImage.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        document.getElementById('predict-button').addEventListener('click', function() {
+            const file = fileInput.files[0];
+            if (!file) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerText = 'Error: No file selected.';
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("image", file);
+
+            fetch('/predict_gender', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('gender-result-container').style.display = 'block';
+                    document.getElementById('gender-result').innerText = `Predicted Gender: ${data.gender_result}`;
+                    document.getElementById('gender-probabilities').innerHTML = Object.entries(data.gender_probabilities)
+                        .map(([label, prob]) => `${label}: ${prob.toFixed(2)}%`).join('<br>');
+                })
+                .catch(error => {
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('error').innerText = 'Error: Unable to process the image for gender prediction.';
+                });
+
+            fetch('/predict_age', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('age-result-container').style.display = 'block';
+                    document.getElementById('age-result').innerText = `Predicted Age: ${data.age_class_result}`;
+                    document.getElementById('age-probabilities').innerHTML = Object.entries(data.age_class_probabilities)
+                        .map(([label, prob]) => `${label}: ${prob.toFixed(2)}%`).join('<br>');
+                })
+                .catch(error => {
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('error').innerText = 'Error: Unable to process the image for age prediction.';
+                });
+        });
+    </script>
+
+</body>
+</html>
