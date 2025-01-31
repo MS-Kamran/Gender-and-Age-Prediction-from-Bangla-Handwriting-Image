@@ -21,6 +21,29 @@ age_model = load_model('model/AP-AksharNet_1024Age_Trained.h5')
 def index():
     return render_template('index.html')
 
+def preprocess_image(file):
+    # Open the image
+    external_image = Image.open(file)
+
+    # Force the image to RGB
+    if external_image.mode != 'RGB':
+        external_image = external_image.convert('RGB')
+
+    # Resize the image (resize for high-resolution inputs)
+    external_image_resized = external_image.resize((1024, 512))
+
+    # Convert the image to a numpy array and normalize pixel values
+    external_image_array = np.array(external_image_resized) / 255.0
+
+    # Ensure the shape is (512, 1024, 3)
+    if external_image_array.shape != (512, 1024, 3):
+        return None, f'Image shape mismatch: {external_image_array.shape}'
+
+    # Reshape the image to match the input shape of the model (add batch dimension)
+    external_image_array = external_image_array.reshape(1, 512, 1024, 3)
+
+    return external_image_array, None
+
 @app.route('/predict_gender', methods=['POST'])
 def predict_gender():
     if 'image' not in request.files:
@@ -35,25 +58,10 @@ def predict_gender():
     file.save(filepath)
 
     try:
-        # Open the image
-        external_image = Image.open(filepath)
-
-        # Force the image to RGB
-        if external_image.mode != 'RGB':
-            external_image = external_image.convert('RGB')
-
-        # Resize the image
-        external_image_resized = external_image.resize((1024, 512))
-
-        # Convert the image to a numpy array and normalize pixel values
-        external_image_array = np.array(external_image_resized) / 255.0
-
-        # Ensure the shape is (512, 1024, 3)
-        if external_image_array.shape != (512, 1024, 3):
-            return jsonify({'error': f'Image shape mismatch: {external_image_array.shape}'}), 400
-
-        # Reshape the image to match the input shape of the model (add batch dimension)
-        external_image_array = external_image_array.reshape(1, 512, 1024, 3)
+        # Preprocess the image
+        external_image_array, error = preprocess_image(filepath)
+        if error:
+            return jsonify({'error': error}), 400
 
         # Make gender prediction
         prediction = gender_model.predict(external_image_array)
@@ -93,25 +101,10 @@ def predict_age():
     file.save(filepath)
 
     try:
-        # Open the image
-        external_image = Image.open(filepath)
-
-        # Force the image to RGB
-        if external_image.mode != 'RGB':
-            external_image = external_image.convert('RGB')
-
-        # Resize the image
-        external_image_resized = external_image.resize((1024, 512))
-
-        # Convert the image to a numpy array and normalize pixel values
-        external_image_array = np.array(external_image_resized) / 255.0
-
-        # Ensure the shape is (512, 1024, 3)
-        if external_image_array.shape != (512, 1024, 3):
-            return jsonify({'error': f'Image shape mismatch: {external_image_array.shape}'}), 400
-
-        # Reshape the image to match the input shape of the age model (add batch dimension)
-        external_image_array = external_image_array.reshape(1, 512, 1024, 3)
+        # Preprocess the image
+        external_image_array, error = preprocess_image(filepath)
+        if error:
+            return jsonify({'error': error}), 400
 
         # Make age prediction
         prediction = age_model.predict(external_image_array)
