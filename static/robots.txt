@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /static/uploads/
+
+Sitemap: https://yourdomain.com/sitemap.xml 

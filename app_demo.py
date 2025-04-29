@@ -1,14 +1,11 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory, make_response
 from flask_cors import CORS
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-import numpy as np
 import os
 import uuid
 import time
 from PIL import Image
 from werkzeug.utils import secure_filename
-from functools import lru_cache
+import random
 
 app = Flask(__name__)
 CORS(app)
@@ -21,62 +18,9 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
 # Create upload directory if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Load models only once when the app starts
-print("Loading models...")
-start_time = time.time()
-
-# Configure TensorFlow for better performance
-tf.config.threading.set_inter_op_parallelism_threads(4)
-tf.config.threading.set_intra_op_parallelism_threads(4)
-
-# Load models with optimization
-try:
-    # Load the gender model
-    gender_model = load_model('model/AP-AksharNet_1024Gender_Trained.h5', compile=False)
-    gender_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    
-    # Load the age model
-    age_model = load_model('model/AP-AksharNet_1024Age_Trained.h5', compile=False)
-    age_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    
-    print(f"Models loaded successfully in {time.time() - start_time:.2f} seconds")
-except Exception as e:
-    print(f"Error loading models: {str(e)}")
-    raise
-
 # Helper functions
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
-@lru_cache(maxsize=32)
-def preprocess_image(file_path):
-    """
-    Preprocess image with caching for improved performance
-    """
-    try:
-        # Open the image
-        img = Image.open(file_path)
-
-        # Force the image to RGB
-        if img.mode != 'RGB':
-            img = img.convert('RGB')
-
-        # Resize the image
-        img_resized = img.resize((1024, 512))
-
-        # Convert to numpy array and normalize
-        img_array = np.array(img_resized) / 255.0
-
-        # Ensure the shape is correct
-        if img_array.shape != (512, 1024, 3):
-            return None, f'Image shape mismatch: {img_array.shape}'
-
-        # Add batch dimension
-        img_array = np.expand_dims(img_array, axis=0)
-
-        return img_array, None
-    except Exception as e:
-        return None, f'Error preprocessing image: {str(e)}'
 
 def save_uploaded_file(file):
     """
@@ -140,23 +84,27 @@ def predict_gender():
         return jsonify({'error': error}), 400
 
     try:
-        # Preprocess the image
-        img_array, error = preprocess_image(filepath)
-        if error:
-            return jsonify({'error': error}), 400
+        # Simulate processing delay
+        time.sleep(1)
 
-        # Make prediction
-        prediction = gender_model.predict(img_array, verbose=0)
-
-        # Define gender class labels
+        # Mock prediction results
         gender_labels = ["Female", "Male"]
-        result = prediction.argmax(axis=1)[0]
-        result_label = gender_labels[result]
-
-        # Get probabilities
-        prediction_probs = prediction[0]
+        
+        # Randomly select a gender for demo purposes
+        random_index = random.randint(0, 1)
+        result_label = gender_labels[random_index]
+        
+        # Generate mock probabilities
+        if random_index == 0:  # Female
+            female_prob = random.uniform(60, 95)
+            male_prob = 100 - female_prob
+        else:  # Male
+            male_prob = random.uniform(60, 95)
+            female_prob = 100 - male_prob
+            
         gender_prediction_details = {
-            gender_labels[i]: float(prediction_probs[i] * 100) for i in range(len(gender_labels))
+            "Female": float(female_prob),
+            "Male": float(male_prob)
         }
 
         # Create the relative filepath for frontend display
@@ -187,28 +135,30 @@ def predict_age():
         return jsonify({'error': error}), 400
 
     try:
-        # Preprocess the image
-        img_array, error = preprocess_image(filepath)
-        if error:
-            return jsonify({'error': error}), 400
+        # Simulate processing delay
+        time.sleep(0.5)
 
-        # Make prediction
-        prediction = age_model.predict(img_array, verbose=0)
-
-        # Define age class labels
+        # Mock prediction results
         age_labels = [
             "14-16 Years", "8-10 Years", "11-13 Years", "4-7 Years", "17-21 Years"
         ]
 
-        # Get prediction probabilities
-        prediction_probs = prediction[0]
+        # Randomly select an age range for demo purposes
+        random_index = random.randint(0, len(age_labels) - 1)
+        result_label = age_labels[random_index]
+        
+        # Generate mock probabilities
+        probabilities = [random.uniform(5, 20) for _ in range(len(age_labels))]
+        # Make the selected age range have a higher probability
+        probabilities[random_index] = random.uniform(40, 85)
+        
+        # Normalize probabilities to sum to 100
+        total = sum(probabilities)
+        probabilities = [p * 100 / total for p in probabilities]
+        
         age_prediction_details = {
-            age_labels[i]: float(prediction_probs[i] * 100) for i in range(len(age_labels))
+            age_labels[i]: float(probabilities[i]) for i in range(len(age_labels))
         }
-
-        # Get the most likely age range
-        result = prediction.argmax(axis=1)[0]
-        result_label = age_labels[result]
 
         # Create the relative filepath for frontend display
         display_filepath = filepath.replace('\\', '/').split('static/')[-1]
@@ -224,6 +174,6 @@ def predict_age():
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 8080))
     debug_mode = os.environ.get('FLASK_ENV') == 'development'
-    app.run(host='0.0.0.0', port=port, debug=debug_mode)
+    app.run(host='0.0.0.0', port=port, debug=True) 
